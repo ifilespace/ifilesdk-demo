@@ -1,0 +1,11 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.db
+*.test
+*.out
+.DS_Store
+*.lock
