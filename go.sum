@@ -32,6 +32,8 @@ github.com/ifilespace/ifilesdk-go v0.1.0 h1:/9fScCCIajybwVLs32kHWG3IcXpQoK/KzkpS
 github.com/ifilespace/ifilesdk-go v0.1.0/go.mod h1:cwhGuRrP0owVqXWwrfYNdcU7jC/qY6CSrecio55UiGw=
 github.com/ifilespace/ifilesdk-go v0.1.1 h1:QHlyLAkRI9AmLcLm+ftEMtBk494PjF+254X0TE1jrvk=
 github.com/ifilespace/ifilesdk-go v0.1.1/go.mod h1:cwhGuRrP0owVqXWwrfYNdcU7jC/qY6CSrecio55UiGw=
+github.com/ifilespace/ifilesdk-go v0.1.2 h1:ZwJ/mq6fOCDT3l5lLxtHpEsOl+oZujWJGbnJM4g91kA=
+github.com/ifilespace/ifilesdk-go v0.1.2/go.mod h1:cwhGuRrP0owVqXWwrfYNdcU7jC/qY6CSrecio55UiGw=
 github.com/jmoiron/sqlx v1.3.5 h1:vFFPA71p1o5gAeqtEAwLU4dnX2napprKtHr7PYIcN3g=
 github.com/jmoiron/sqlx v1.3.5/go.mod h1:nRVWtLre0KfCLJvgxzCsLVMogSvQ1zNJtpYr2Ccp0mQ=
 github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnrnM=

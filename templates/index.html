@@ -19,16 +19,17 @@
         <a-space style="padding:30px 20px 20px 20px;">
             <a-button @click="showsetconfig=true">Config设置</a-button>
             <a-button @click="showreguserbox=true">注册账号</a-button>
-            <a-select allow-clear :value="userinfo.id" :options="userlist"
-                :field-names="{ label: 'username', value: 'id'}" @change="changeuser" placeholder="切换账号"></a-select>
-            <a-select allow-clear :value="projectinfo.id" :options="projectlist"
-                :field-names="{ label: 'title', value: 'id'}" placeholder="切换项目" @change="changeproject"></a-select>
+            <a-select allow-clear :value="userinfo.id" :options="userlist" :field-names="{ label: 'username', value: 'id'}" @change="changeuser" placeholder="切换账号"></a-select>
+            <a-select allow-clear :value="projectinfo.id" :options="projectlist" :field-names="{ label: 'title', value: 'id'}" placeholder="切换项目" @change="changeproject"></a-select>
+            <a-popconfirm v-if="projectinfo.id>0" title="删除项目，选择项目文件删除方式" ok-text="删除文件" cancel-text="取消绑定" @confirm="deleteproject('delete')" @cancel="deleteproject('cancelbind')">
+                <a-button type="primary" danger>删除项目</a-button>
+            </a-popconfirm>
+
             <a-button type="primary" @click="showprojectbox=true">新建项目</a-button>
             <a-button type="primary" danger @click="loadpage">加载页面</a-button>
         </a-space>
         <div style="flex-grow: 1;">
-            <iframe style="margin: 0;padding:0;border:0;width:100%;height:99%;" v-if="showiframe"
-                :src="iframeurl"></iframe>
+            <iframe style="margin: 0;padding:0;border:0;width:100%;height:99%;" v-if="showiframe" :src="iframeurl"></iframe>
         </div>
         <a-modal v-model:visible="showsetconfig" title="设置config" @ok="confirmconfig">
             <a-form ref="configform" :model="config" name="basic" autocomplete="off">
@@ -170,6 +171,24 @@
                             console.log(err);
                         });
                 }
+                const deleteproject = (leixing) => {
+                    axios.post('/deleteproject', {
+                            leixing: leixing,
+                            projectid: projectinfo.value.id + ""
+                        })
+                        .then(res => {
+                            if (res.data.status == 1) {
+                                antd.message.success(res.data.msg)
+                                showprojectbox.value = false
+                                getinfo();
+                            } else {
+                                antd.message.error(res.data.msg)
+                            }
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        });
+                }
 
                 const userinfo = Vue.ref({})
                 const userlist = Vue.ref([])
@@ -274,7 +293,8 @@
                     getinfo,
                     changeuser,
                     changeproject,
-                    loadpage
+                    loadpage,
+                    deleteproject
                 }
             }
         }

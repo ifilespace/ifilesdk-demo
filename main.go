@@ -28,6 +28,7 @@ func main() {
 	r.POST("/createproject", Createproject)
 	r.POST("/getproject", Getproject)
 	r.POST("/getiframeurl", Getiframeurl)
+	r.POST("/deleteproject", DeleteProject)
 	r.Run(":8080")
 }
 func Index(c *gin.Context) {
@@ -168,6 +169,68 @@ func Createproject(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "添加项目失败1"})
 		return
+	}
+}
+func DeleteProject(c *gin.Context) {
+	var post map[string]string
+	err := c.BindJSON(&post)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": err.Error()})
+		return
+	}
+	var projectid = post["projectid"]
+	var leixing = post["leixing"]
+	if projectid == "" || leixing == "" {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "参数错误"})
+		return
+	}
+	var ifileuid int
+	var fileid string
+	err = data.SQLDB.QueryRow("select a.ifile_root,b.ifileuid from project a left join users b on a.uid=b.id where a.id=?", projectid).Scan(&fileid, &ifileuid)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "获取信息失败"})
+		return
+	}
+	var conf model.Config
+	err = data.SQLDB.Get(&conf, "select * from config where id=1")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "请配置config"})
+		return
+	}
+	ifile := ifilesdk.NewIfile(&config.Config{
+		Keyid:     conf.Keyid,
+		Keysecret: conf.Keysecret,
+		Url:       conf.Ifileurl,
+	})
+	if leixing == "delete" {
+
+		res, err := ifile.DeleteFolder(&ifilemodel.DeleteFolderReq{FileID: fileid, Uid: ifileuid})
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "删除项目失败"})
+			return
+		}
+		if res.Status == 1 {
+			data.SQLDB.Exec("delete from project where id=?", projectid)
+			c.JSON(http.StatusOK, gin.H{"status": 1, "msg": "删除项目成功"})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "删除文件夹失败"})
+			return
+		}
+	} else if leixing == "cancelbind" {
+		res, err := ifile.CancelBindFolder(&ifilemodel.CancelBindFolderReq{FileID: fileid, Uid: ifileuid})
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "删除项目失败"})
+			return
+		}
+		if res.Status == 1 || res.Msg == "设置成功" {
+			data.SQLDB.Exec("delete from project where id=?", projectid)
+			c.JSON(http.StatusOK, gin.H{"status": 1, "msg": "删除项目成功"})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "取消绑定失败"})
+			return
+		}
+	} else {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "类型错误"})
 	}
 }
 func Getiframeurl(c *gin.Context) {
