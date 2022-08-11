@@ -299,10 +299,10 @@
                         })
                         .then(res => {
                             if (res.data.status == 1) {
-                                showjoinproject.value = true
+                                showjoinproject.value = false
                                 projectinfo.value.userid = userinfo.value.id
                                 projectinfo.value.auth = projectauth.value
-                                antd.message.error(res.data.msg)
+                                antd.message.success(res.data.msg)
                             } else {
                                 antd.message.error(res.data.msg)
                             }

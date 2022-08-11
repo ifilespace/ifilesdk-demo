@@ -109,7 +109,9 @@ func Createuser(c *gin.Context) {
 		Url:       conf.Ifileurl,
 	})
 	res, err := ifile.CreateUser(&ifilemodel.CreateUserReq{Username: post.Username, Email: post.Email, Password: post.Password, Mobile: post.Mobile})
+	fmt.Println(res)
 	if err != nil {
+		fmt.Println(err)
 		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "创建iFile用户失败"})
 		return
 	}
@@ -253,7 +255,7 @@ func Getiframeurl(c *gin.Context) {
 	}
 	rootpath := "root"
 	if post["projectid"] > 0 {
-		err = data.SQLDB.Get(&rootpath, "select ifile_root from project where id=? and uid=?", post["projectid"], post["uid"])
+		err = data.SQLDB.Get(&rootpath, "select ifile_root from project where id=?", post["projectid"])
 		if err != nil {
 			rootpath = "root"
 		}
@@ -308,6 +310,12 @@ func JoinProject(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "请选择项目"})
 		return
 	}
+	var ifileuid int
+	err = data.SQLDB.Get(&ifileuid, "select ifileuid from users where id=?", post["uid"])
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "获取ifileuid错误"})
+		return
+	}
 	var fileid string
 	err = data.SQLDB.Get(&fileid, "select ifile_root from project where id=?", post["projectid"])
 	if err != nil {
@@ -326,7 +334,7 @@ func JoinProject(c *gin.Context) {
 		Keysecret: conf.Keysecret,
 		Url:       conf.Ifileurl,
 	})
-	res, err := ifile.JoinProject(int(post["uid"].(float64)), fileid, auth)
+	res, err := ifile.JoinProject(ifileuid, fileid, auth)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "加入项目失败"})
 		return
@@ -335,6 +343,6 @@ func JoinProject(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": res.Msg})
 		return
 	}
-	data.SQLDB.Exec("update project set userid=?,auth=? where id=?", post["projectid"])
+	data.SQLDB.Exec("update project set userid=?,auth=? where id=?", post["uid"], auth, post["projectid"])
 	c.JSON(http.StatusOK, gin.H{"status": 1, "msg": "加入成功"})
 }
