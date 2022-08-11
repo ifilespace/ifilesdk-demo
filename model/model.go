@@ -20,6 +20,8 @@ type Project struct {
 	Title     string `json:"title"`
 	IfileRoot string `json:"ifile_root" db:"ifile_root"`
 	UID       int    `json:"uid"`
+	UserID    int    `json:"userid"`
+	Auth      string `json:"auth"`
 }
 type Task struct {
 	ID        int    `json:"id"`

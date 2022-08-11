@@ -29,6 +29,7 @@ func main() {
 	r.POST("/getproject", Getproject)
 	r.POST("/getiframeurl", Getiframeurl)
 	r.POST("/deleteproject", DeleteProject)
+	r.POST("/joinproject", JoinProject)
 	r.Run(":8080")
 }
 func Index(c *gin.Context) {
@@ -41,7 +42,7 @@ func Getinfo(c *gin.Context) {
 	data.SQLDB.Select(&userlist, "select * from users")
 	projectlist := make([]model.Project, 0)
 	if len(userlist) > 0 {
-		data.SQLDB.Select(&projectlist, "select * from project where uid=?", userlist[0].ID)
+		data.SQLDB.Select(&projectlist, "select * from project ")
 	}
 	tasklist := make([]model.Task, 0)
 	data.SQLDB.Select(&tasklist, "select * from task")
@@ -268,7 +269,7 @@ func Getiframeurl(c *gin.Context) {
 		Keysecret: conf.Keysecret,
 		Url:       conf.Ifileurl,
 	})
-	res, err := ifile.GetUserToken(ifileuid)
+	res, err := ifile.GetProjectToken(ifileuid, rootpath)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "获取用户Token失败"})
 		return
@@ -291,4 +292,49 @@ func Getiframeurl(c *gin.Context) {
 	iurl := conf.Ifileurl + "/thirdapp/?token=" + res.Data + "&driveid=" + res.Driveid + "&keyid=" + conf.Keyid + "&sign=" + sign + "&now=" + strconv.FormatInt(now, 10) + "&theme=dark&hideside=1&root=" + rootpath
 	c.JSON(http.StatusOK, gin.H{"status": 1, "msg": "获取成功", "data": iurl})
 
+}
+func JoinProject(c *gin.Context) {
+	var post map[string]interface{}
+	err := c.BindJSON(&post)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": err.Error()})
+		return
+	}
+	if post["uid"].(float64) <= 0 {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "请选择用户"})
+		return
+	}
+	if post["projectid"].(float64) <= 0 {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "请选择项目"})
+		return
+	}
+	var fileid string
+	err = data.SQLDB.Get(&fileid, "select ifile_root from project where id=?", post["projectid"])
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "获取fileid错误"})
+		return
+	}
+	auth := post["auth"].(string)
+	var conf model.Config
+	err = data.SQLDB.Get(&conf, "select * from config where id=1")
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "请配置config"})
+		return
+	}
+	ifile := ifilesdk.NewIfile(&config.Config{
+		Keyid:     conf.Keyid,
+		Keysecret: conf.Keysecret,
+		Url:       conf.Ifileurl,
+	})
+	res, err := ifile.JoinProject(int(post["uid"].(float64)), fileid, auth)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "加入项目失败"})
+		return
+	}
+	if res.Status != 1 {
+		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": res.Msg})
+		return
+	}
+	data.SQLDB.Exec("update project set userid=?,auth=? where id=?", post["projectid"])
+	c.JSON(http.StatusOK, gin.H{"status": 1, "msg": "加入成功"})
 }

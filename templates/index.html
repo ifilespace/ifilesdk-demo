@@ -21,10 +21,11 @@
             <a-button @click="showreguserbox=true">注册账号</a-button>
             <a-select allow-clear :value="userinfo.id" :options="userlist" :field-names="{ label: 'username', value: 'id'}" @change="changeuser" placeholder="切换账号"></a-select>
             <a-select allow-clear :value="projectinfo.id" :options="projectlist" :field-names="{ label: 'title', value: 'id'}" placeholder="切换项目" @change="changeproject"></a-select>
-            <a-popconfirm v-if="projectinfo.id>0" title="删除项目，选择项目文件删除方式" ok-text="删除文件" cancel-text="取消绑定" @confirm="deleteproject('delete')" @cancel="deleteproject('cancelbind')">
-                <a-button type="primary" danger>删除项目</a-button>
+            <a-popconfirm :disabled="!projectinfo.id||userinfo.id!=projectinfo.uid" title="删除项目，选择项目文件删除方式" ok-text="删除文件" cancel-text="取消绑定" @confirm="deleteproject('delete')" @cancel="deleteproject('cancelbind')">
+                <a-button :disabled="!projectinfo.id||userinfo.id!=projectinfo.uid" type="primary" danger>删除项目
+                </a-button>
             </a-popconfirm>
-
+            <a-button type="primary" :disabled="!projectinfo.id||userinfo.id==projectinfo.uid||userinfo.id==projectinfo.userid" @click="joinproject">加入项目</a-button>
             <a-button type="primary" @click="showprojectbox=true">新建项目</a-button>
             <a-button type="primary" danger @click="loadpage">加载页面</a-button>
         </a-space>
@@ -68,6 +69,9 @@
                     <a-input v-model:value="projectfields.title" />
                 </a-form-item>
             </a-form>
+        </a-modal>
+        <a-modal v-model:visible="showjoinproject" title="加入项目" @ok="confirmjoinproject">
+            <a-input v-model:value="projectauth" placeholder="输入权限 readonly 或 notdelete ，空为不限制" />
         </a-modal>
     </div>
     <script>
@@ -219,9 +223,9 @@
                             userinfo.value = e
                         }
                     });
-                    showiframe.value = false
-                    projectinfo.value = {}
-                    getproject(userinfo.value.id);
+                    // showiframe.value = false
+                    // projectinfo.value = {}
+                    // getproject(userinfo.value.id);
                 }
                 const getproject = (uid) => {
                     axios.post('/getproject', {
@@ -270,6 +274,44 @@
                             console.log(err);
                         });
                 }
+                const showjoinproject = Vue.ref(false)
+                const projectauth = Vue.ref("")
+                const joinproject = () => {
+                    showjoinproject.value = true
+                }
+                const confirmjoinproject = () => {
+                    if (!projectinfo.value.id) {
+                        antd.message.error("请选择项目")
+                        return
+                    }
+                    if (!userinfo.value.id) {
+                        antd.message.error("请选择用户")
+                        return
+                    }
+                    if (projectinfo.value.uid == userinfo.value.id) {
+                        antd.message.error("用户为创建者无需加入")
+                        return
+                    }
+                    axios.post('/joinproject', {
+                            uid: userinfo.value.id,
+                            projectid: projectinfo.value.id,
+                            auth: projectauth.value
+                        })
+                        .then(res => {
+                            if (res.data.status == 1) {
+                                showjoinproject.value = true
+                                projectinfo.value.userid = userinfo.value.id
+                                projectinfo.value.auth = projectauth.value
+                                antd.message.error(res.data.msg)
+                            } else {
+                                antd.message.error(res.data.msg)
+                            }
+                        })
+                        .catch(err => {
+                            console.log(err);
+                        });
+                }
+
                 return {
                     showsetconfig,
                     config,
@@ -294,7 +336,11 @@
                     changeuser,
                     changeproject,
                     loadpage,
-                    deleteproject
+                    deleteproject,
+                    showjoinproject,
+                    projectauth,
+                    joinproject,
+                    confirmjoinproject
                 }
             }
         }
