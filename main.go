@@ -271,7 +271,13 @@ func Getiframeurl(c *gin.Context) {
 		Keysecret: conf.Keysecret,
 		Url:       conf.Ifileurl,
 	})
-	res, err := ifile.GetProjectToken(ifileuid, rootpath)
+	var res ifilemodel.GetUserTokenRet
+	if rootpath == "root" {
+		res, err = ifile.GetUserToken(ifileuid)
+	} else {
+		res, err = ifile.GetProjectToken(ifileuid, rootpath)
+	}
+
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"status": -1, "msg": "获取用户Token失败"})
 		return
@@ -291,7 +297,8 @@ func Getiframeurl(c *gin.Context) {
 	// theme 页面样式 dark暗黑模式其他为 普通模式
 	// hideside 是否隐藏侧边栏 1隐藏，不传或0为显示侧边栏
 	// root 可访问文件的根目录
-	iurl := conf.Ifileurl + "/thirdapp/?token=" + res.Data + "&driveid=" + res.Driveid + "&keyid=" + conf.Keyid + "&sign=" + sign + "&now=" + strconv.FormatInt(now, 10) + "&theme=dark&hideside=1&root=" + rootpath
+	iurl := conf.Ifileurl + "/thirdapp/?token=" + res.Data + "&driveid=" + res.Driveid + "&keyid=" + conf.Keyid + "&sign=" + sign + "&now=" + strconv.FormatInt(now, 10) + "&theme=dark&hideside=0&root=" + rootpath
+	// iurl := "http://127.0.0.1:3000/thirdapp/?token=" + res.Data + "&driveid=" + res.Driveid + "&keyid=" + conf.Keyid + "&sign=" + sign + "&now=" + strconv.FormatInt(now, 10) + "&theme=dark&hideside=0&root=" + rootpath
 	c.JSON(http.StatusOK, gin.H{"status": 1, "msg": "获取成功", "data": iurl})
 
 }
